@@ -45,7 +45,8 @@ const addMovie = (req, res, next) => {
 };
 
 const getMovies = (req, res, next) => {
-  Movie.find({})
+  const owner = req.user._id;
+  Movie.find({ owner })
     .then((movies) => res.status(200).send(movies))
     .catch(next);
 };
@@ -54,7 +55,7 @@ const deleteMovie = (req, res, next) => {
   Movie.findById(req.params.movieId)
     .orFail(new NotFoundError('Фильм не найден'))
     .then((movie) => {
-      if (`${movie.owner}` !== req.user._id) {
+      if (movie.owner.equals(req.user._id)) {
         throw new ForbiddenError('Удаление чужого фильма невозможно');
       }
       return Movie.findByIdAndDelete(req.params.movieId);

@@ -6,7 +6,13 @@ const UnAuthorizedError = require('../errors/UnAuthorizedError');
 
 // eslint-disable-next-line
 module.exports = (req, res, next) => {
-  const token = req.cookies.jwt;
+  const { authorization } = req.headers;
+
+  if (!authorization || !authorization.startsWith('Bearer ')) {
+    return next(new UnAuthorizedError('Необходима авторизация'));
+  }
+
+  const token = authorization.replace('Bearer ', '');
 
   if (!token) {
     return next(new UnAuthorizedError('Необходимо авторизироваться'));
