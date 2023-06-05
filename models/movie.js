@@ -16,15 +16,15 @@ const movieSchema = new mongoose.Schema({
   },
   year: {
     type: String,
-    require: true,
+    required: true,
   },
   description: {
     type: String,
-    require: true,
+    required: true,
   },
   image: {
     type: String,
-    require: true,
+    required: true,
     validate: {
       validator: (link) => validator.isURL(link),
       message: 'Ошибка при передаче ссылки на постер',
@@ -32,7 +32,7 @@ const movieSchema = new mongoose.Schema({
   },
   trailerLink: {
     type: String,
-    require: true,
+    required: true,
     validate: {
       validator: (link) => validator.isURL(link),
       message: 'Ошибка при передаче ссылки на трейлер',
@@ -40,7 +40,7 @@ const movieSchema = new mongoose.Schema({
   },
   thumbnail: {
     type: String,
-    require: true,
+    required: true,
     validate: {
       validator: (link) => validator.isURL(link),
       message: 'Ошибка при передаче ссылки на миниатюрное изображение постера',
@@ -57,11 +57,11 @@ const movieSchema = new mongoose.Schema({
   },
   nameRU: {
     type: String,
-    require: true,
+    required: true,
   },
   nameEN: {
     type: String,
-    require: true,
+    required: true,
   },
 });
 
