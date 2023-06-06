@@ -12,7 +12,7 @@ const responseError = require('./middlewares/response');
 
 const mainRouter = require('./routes/index');
 
-const { PORT, MONGO_URL, NODE_ENV } = process.env;
+const { PORT = 3000, MONGO_URL, NODE_ENV } = process.env;
 const app = express();
 
 mongoose.set('strictQuery', false);
