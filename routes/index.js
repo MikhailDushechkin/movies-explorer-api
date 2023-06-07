@@ -8,6 +8,7 @@ const { userValidation, userAuthValidation } = require('../middlewares/validate'
 const auth = require('../middlewares/auth');
 
 const NotFoundError = require('../errors/NotFoundError');
+const { Message } = require('../utils/constants');
 
 mainRouter.post('/signup', userValidation, createUser);
 mainRouter.post('/signin', userAuthValidation, loginUser);
@@ -17,7 +18,7 @@ mainRouter.use('/users', auth, usersRouter);
 mainRouter.use('/movies', auth, moviesRouter);
 
 mainRouter.use('*', auth, (req, res, next) => {
-  next(new NotFoundError('Страница не найдена'));
+  next(new NotFoundError(Message.PAGE_NOT_FOUND));
 });
 
 module.exports = mainRouter;

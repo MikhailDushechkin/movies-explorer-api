@@ -1,14 +1,19 @@
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
+const mongoose = require('mongoose');
 
 const User = require('../models/user');
 
 const { NODE_ENV, JWT_SECRET } = process.env;
+const { jwtSecret } = require('../utils/config');
+
+const { ValidationError } = mongoose.Error;
 
 const UnAuthorizedError = require('../errors/UnAuthorizedError');
 const BadRequestError = require('../errors/BadRequestError');
 const NotFoundError = require('../errors/NotFoundError');
 const ConflictError = require('../errors/ConflictError');
+const { CodeSuccess, Message } = require('../utils/constants');
 
 // авторизация пользователя
 const loginUser = (req, res, next) => {
@@ -16,27 +21,23 @@ const loginUser = (req, res, next) => {
 
   return User.findUserByCredentials(email, password)
     .then((user) => {
-      if (!user) {
-        return Promise.reject(new UnAuthorizedError('Неправильные email или password'));
-      }
       const token = jwt.sign(
         { _id: user._id },
-        NODE_ENV === 'production' ? JWT_SECRET : 'some-secret-key',
+        NODE_ENV === 'production' ? JWT_SECRET : jwtSecret,
         { expiresIn: '7d' },
       );
 
       res.cookie('jwt', token, {
         maxAge: 3600000 * 24 * 7,
         httpOnly: true,
-      }).send({ token });
-      return bcrypt.compare(password, user.password);
+      }).send({ message: Message.SUCCESS_AUTH });
     })
     .then((matched) => {
       if (!matched) {
-        Promise.reject(new UnAuthorizedError('Неправильные email или password'));
+        Promise.reject(new UnAuthorizedError(Message.UNAUTHORIZED));
         return;
       }
-      res.send({ message: 'Всё верно!' });
+      res.send({ message: Message.SUCCESS_AUTH });
     })
     .catch((err) => {
       next(err);
@@ -45,7 +46,7 @@ const loginUser = (req, res, next) => {
 
 // выход из системы
 const logoutUser = (req, res) => {
-  res.clearCookie('jwt').send({ message: 'Выполнен выход из системы' });
+  res.clearCookie('jwt').send({ message: Message.LOGOUT });
 };
 
 // регистрация пользователя
@@ -63,16 +64,16 @@ const createUser = (req, res, next) => {
       email,
       password: hash,
     }))
-    .then((user) => res.status(201).send({
+    .then((user) => res.status(CodeSuccess.OK).send({
       name: user.name,
       _id: user._id,
       email: user.email,
     }))
     .catch((err) => {
       if (err.name === 'ValidationError') {
-        next(new BadRequestError('Переданы некорректные данные'));
+        next(new BadRequestError(Message.BAD_REQUEST));
       } else if (err.code === 11000) {
-        next(new ConflictError('Такой пользователь уже существует'));
+        next(new ConflictError(Message.USER_CONFLICT));
       } else {
         next(err);
       }
@@ -84,11 +85,11 @@ const getUserById = (req, res, next) => {
   User.findById(req.params._id)
     .orFail(new NotFoundError('Пользователь не найден'))
     .then((user) => {
-      res.status(200).send(user);
+      res.status(CodeSuccess.OK).send(user);
     })
     .catch((err) => {
-      if (err.name === 'CastError' || err.name === 'ValidationError') {
-        next(new BadRequestError('Некорректный запрос'));
+      if (err instanceof ValidationError) {
+        next(new BadRequestError(Message.BAD_REQUEST));
         return;
       }
       next(err);
@@ -104,13 +105,18 @@ const updateUserData = (req, res, next) => {
     { name, email },
     { new: true, runValidators: true },
   )
-    .orFail(new NotFoundError('Пользователь не найден'))
+    .orFail(new NotFoundError(Message.USER_NOT_FOUND))
     .then((user) => {
-      res.status(200).send(user);
+      res.status(CodeSuccess.OK).send(user);
     })
     .catch((err) => {
-      if (err.name === 'CastError' || err.name === 'ValidationError') {
-        next(new BadRequestError('Переданы некорректные данные'));
+      if (err instanceof ValidationError) {
+        next(new BadRequestError(Message.BAD_REQUEST));
+        return;
+      }
+
+      if (err.code === 11000) {
+        next(new ConflictError(Message.USER_CONFLICT));
         return;
       }
       next(err);
