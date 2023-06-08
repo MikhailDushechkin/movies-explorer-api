@@ -25,11 +25,10 @@ const loginUser = (req, res, next) => {
         NODE_ENV === modeProduction ? JWT_SECRET : jwtSecret,
         { expiresIn: '7d' },
       );
-      res.cookie('jwt', token, {
+      return res.cookie('jwt', token, {
         maxAge: 3600000 * 24 * 7,
         httpOnly: true,
-      });
-      res.send({ message: Message.SUCCESS_AUTH });
+      }).send({ message: Message.SUCCESS_AUTH });
     })
     .catch((err) => {
       next(err);

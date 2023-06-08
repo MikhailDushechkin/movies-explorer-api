@@ -67,13 +67,12 @@ const deleteMovie = (req, res, next) => {
   Movie.findById(req.params.movieId)
     .orFail()
     .then((movie) => {
-      if (movie.owner.equals(req.user._id)) {
+      if (movie.owner.toString() === req.user._id) {
+        movie.deleteOne();
+        res.send({ message: Message.MOVIE_DELETE });
+      } else {
         throw new ForbiddenError(Message.MOVIE_FORBIDDEN);
       }
-      return Movie.deleteOne(req.params.movieId);
-    })
-    .then((movie) => {
-      res.status(200).send(movie);
     })
     .catch((err) => {
       if (err instanceof CastError) {
