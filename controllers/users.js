@@ -5,11 +5,10 @@ const mongoose = require('mongoose');
 const User = require('../models/user');
 
 const { NODE_ENV, JWT_SECRET } = process.env;
-const { jwtSecret } = require('../utils/config');
+const { jwtSecret, modeProduction } = require('../utils/config');
 
-const { ValidationError } = mongoose.Error;
+const { ValidationError, DocumentNotFoundError } = mongoose.Error;
 
-const UnAuthorizedError = require('../errors/UnAuthorizedError');
 const BadRequestError = require('../errors/BadRequestError');
 const NotFoundError = require('../errors/NotFoundError');
 const ConflictError = require('../errors/ConflictError');
@@ -23,20 +22,13 @@ const loginUser = (req, res, next) => {
     .then((user) => {
       const token = jwt.sign(
         { _id: user._id },
-        NODE_ENV === 'production' ? JWT_SECRET : jwtSecret,
+        NODE_ENV === modeProduction ? JWT_SECRET : jwtSecret,
         { expiresIn: '7d' },
       );
-
       res.cookie('jwt', token, {
         maxAge: 3600000 * 24 * 7,
         httpOnly: true,
-      }).send({ message: Message.SUCCESS_AUTH });
-    })
-    .then((matched) => {
-      if (!matched) {
-        Promise.reject(new UnAuthorizedError(Message.UNAUTHORIZED));
-        return;
-      }
+      });
       res.send({ message: Message.SUCCESS_AUTH });
     })
     .catch((err) => {
@@ -83,16 +75,16 @@ const createUser = (req, res, next) => {
 // получение конкретного пользователя
 const getUserById = (req, res, next) => {
   User.findById(req.params._id)
-    .orFail(new NotFoundError('Пользователь не найден'))
+    .orFail()
     .then((user) => {
       res.status(CodeSuccess.OK).send(user);
     })
     .catch((err) => {
-      if (err instanceof ValidationError) {
-        next(new BadRequestError(Message.BAD_REQUEST));
-        return;
+      if (err instanceof DocumentNotFoundError) {
+        next(new NotFoundError(Message.USER_NOT_FOUND));
+      } else {
+        next(err);
       }
-      next(err);
     });
 };
 
@@ -105,21 +97,20 @@ const updateUserData = (req, res, next) => {
     { name, email },
     { new: true, runValidators: true },
   )
-    .orFail(new NotFoundError(Message.USER_NOT_FOUND))
+    .orFail()
     .then((user) => {
       res.status(CodeSuccess.OK).send(user);
     })
     .catch((err) => {
       if (err instanceof ValidationError) {
         next(new BadRequestError(Message.BAD_REQUEST));
-        return;
-      }
-
-      if (err.code === 11000) {
+      } else if (err instanceof DocumentNotFoundError) {
+        next(new NotFoundError(Message.USER_NOT_FOUND));
+      } else if (err.code === 11000) {
         next(new ConflictError(Message.USER_CONFLICT));
-        return;
+      } else {
+        next(err);
       }
-      next(err);
     });
 };
 

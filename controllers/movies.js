@@ -2,7 +2,7 @@ const mongoose = require('mongoose');
 
 const Movie = require('../models/movie');
 
-const { ValidationError, CastError } = mongoose.Error;
+const { ValidationError, CastError, DocumentNotFoundError } = mongoose.Error;
 
 const BadRequestError = require('../errors/BadRequestError');
 const NotFoundError = require('../errors/NotFoundError');
@@ -44,9 +44,9 @@ const addMovie = (req, res, next) => {
     .catch((err) => {
       if (err instanceof ValidationError) {
         next(new BadRequestError(Message.BAD_REQUEST));
-        return;
+      } else {
+        next(err);
       }
-      next(err);
     });
 };
 
@@ -54,12 +54,18 @@ const getMovies = (req, res, next) => {
   const owner = req.user._id;
   Movie.find({ owner })
     .then((movies) => res.status(CodeSuccess.OK).send(movies))
-    .catch(next);
+    .catch((err) => {
+      if (err instanceof DocumentNotFoundError) {
+        next(new NotFoundError(Message.USER_MOVIES_NOT_FOUND));
+      } else {
+        next(err);
+      }
+    });
 };
 
 const deleteMovie = (req, res, next) => {
   Movie.findById(req.params.movieId)
-    .orFail(new NotFoundError(Message.MOVIE_NOT_FOUND))
+    .orFail()
     .then((movie) => {
       if (movie.owner.equals(req.user._id)) {
         throw new ForbiddenError(Message.MOVIE_FORBIDDEN);
@@ -72,9 +78,11 @@ const deleteMovie = (req, res, next) => {
     .catch((err) => {
       if (err instanceof CastError) {
         next(new BadRequestError(Message.BAD_REQUEST));
-        return;
+      } else if (err instanceof DocumentNotFoundError) {
+        next(new NotFoundError(Message.MOVIE_NOT_FOUND));
+      } else {
+        next(err);
       }
-      next(err);
     });
 };
 

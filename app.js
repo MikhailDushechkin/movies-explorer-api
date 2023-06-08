@@ -11,26 +11,26 @@ const responseError = require('./middlewares/response');
 
 const mainRouter = require('./routes/index');
 
-const { dbAdress, port } = require('./utils/config');
+const { dbAdress, port, modeProduction } = require('./utils/config');
 
 const { PORT = port, MONGO_URL, NODE_ENV } = process.env;
 const app = express();
 
 mongoose.set('strictQuery', false);
-mongoose.connect((NODE_ENV === 'production' ? MONGO_URL : dbAdress), {
+mongoose.connect((NODE_ENV === modeProduction ? MONGO_URL : dbAdress), {
   useNewUrlParser: true,
 });
-
-app.use(cors());
-app.use(helmet());
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-app.use(requestLogger);
+app.use(helmet());
 app.use(limiter);
+app.use(cors());
 
-app.use(mainRouter);
+app.use(requestLogger);
+
+app.use('/', mainRouter);
 
 app.use(errorLogger);
 app.use(errors());
