@@ -28,6 +28,8 @@ const loginUser = (req, res, next) => {
       return res.cookie('jwt', token, {
         maxAge: 3600000 * 24 * 7,
         httpOnly: true,
+        sameSite: 'none',
+        secure: true,
       }).send({ message: Message.SUCCESS_AUTH });
     })
     .catch((err) => {
