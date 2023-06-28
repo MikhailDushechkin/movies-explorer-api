@@ -9,7 +9,7 @@ const allowedCors = [
   'https://dmm.movies.nomoredomains.rocks',
   'http://dmm.movies.nomoredomains.rocks',
   'http://127.0.0.1:3000',
-  'localhost:3000',
+  'http://localhost:3000',
 ];
 
 const limiter = require('./middlewares/limiter');
