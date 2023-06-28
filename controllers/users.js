@@ -23,14 +23,16 @@ const loginUser = (req, res, next) => {
       const token = jwt.sign(
         { _id: user._id },
         NODE_ENV === modeProduction ? JWT_SECRET : jwtSecret,
-        { expiresIn: '7d' },
+        { expiresIn: '7d' }
       );
-      return res.cookie('jwt', token, {
-        maxAge: 3600000 * 24 * 7,
-        httpOnly: true,
-        sameSite: 'none',
-        secure: true,
-      }).send({ message: Message.SUCCESS_AUTH });
+      return res
+        .cookie('jwt', token, {
+          maxAge: 3600000 * 24 * 7,
+          httpOnly: true,
+          sameSite: 'none',
+          secure: true,
+        })
+        .send({ message: Message.SUCCESS_AUTH });
     })
     .catch((err) => {
       next(err);
@@ -44,24 +46,24 @@ const logoutUser = (req, res) => {
 
 // регистрация пользователя
 const createUser = (req, res, next) => {
-  const {
-    name,
-    email,
-    password,
-  } = req.body;
+  const { name, email, password } = req.body;
 
   bcrypt
     .hash(password, 10)
-    .then((hash) => User.create({
-      name,
-      email,
-      password: hash,
-    }))
-    .then((user) => res.status(CodeSuccess.OK).send({
-      name: user.name,
-      _id: user._id,
-      email: user.email,
-    }))
+    .then((hash) =>
+      User.create({
+        name,
+        email,
+        password: hash,
+      })
+    )
+    .then((user) =>
+      res.status(CodeSuccess.OK).send({
+        name: user.name,
+        _id: user._id,
+        email: user.email,
+      })
+    )
     .catch((err) => {
       if (err.name === 'ValidationError') {
         next(new BadRequestError(Message.BAD_REQUEST));
@@ -96,7 +98,7 @@ const updateUserData = (req, res, next) => {
   User.findByIdAndUpdate(
     req.user._id,
     { name, email },
-    { new: true, runValidators: true },
+    { new: true, runValidators: true }
   )
     .orFail()
     .then((user) => {

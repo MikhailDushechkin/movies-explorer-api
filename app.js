@@ -5,6 +5,13 @@ const { errors } = require('celebrate');
 const helmet = require('helmet');
 const cors = require('cors');
 
+const allowedCors = [
+  'https://dmm.movies.nomoredomains.rocks',
+  'http://dmm.movies.nomoredomains.rocks',
+  'http://127.0.0.1:3000',
+  'localhost:3000',
+];
+
 const limiter = require('./middlewares/limiter');
 const { requestLogger, errorLogger } = require('./middlewares/logger');
 const responseError = require('./middlewares/response');
@@ -17,7 +24,7 @@ const { PORT = port, MONGO_URL, NODE_ENV } = process.env;
 const app = express();
 
 mongoose.set('strictQuery', false);
-mongoose.connect((NODE_ENV === modeProduction ? MONGO_URL : dbAdress), {
+mongoose.connect(NODE_ENV === modeProduction ? MONGO_URL : dbAdress, {
   useNewUrlParser: true,
 });
 
@@ -26,7 +33,10 @@ app.use(express.urlencoded({ extended: true }));
 
 app.use(helmet());
 app.use(limiter);
-app.use(cors());
+app.use(cors({
+  origin: allowedCors,
+  credentials: true,
+}));
 
 app.use(requestLogger);
 
