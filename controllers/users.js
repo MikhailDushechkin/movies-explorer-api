@@ -80,7 +80,7 @@ const getUserById = (req, res, next) => {
   User.findById(req.params._id)
     .orFail()
     .then((user) => {
-      res.status(CodeSuccess.OK).send(user);
+      res.status(CodeSuccess.OK).send(user.name, user.email);
     })
     .catch((err) => {
       if (err instanceof DocumentNotFoundError) {
