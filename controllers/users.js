@@ -23,7 +23,7 @@ const loginUser = (req, res, next) => {
       const token = jwt.sign(
         { _id: user._id },
         NODE_ENV === modeProduction ? JWT_SECRET : jwtSecret,
-        { expiresIn: '7d' }
+        { expiresIn: '7d' },
       );
       return res
         .cookie('jwt', token, {
@@ -50,20 +50,16 @@ const createUser = (req, res, next) => {
 
   bcrypt
     .hash(password, 10)
-    .then((hash) =>
-      User.create({
-        name,
-        email,
-        password: hash,
-      })
-    )
-    .then((user) =>
-      res.status(CodeSuccess.OK).send({
-        name: user.name,
-        _id: user._id,
-        email: user.email,
-      })
-    )
+    .then((hash) => User.create({
+      name,
+      email,
+      password: hash,
+    }))
+    .then((user) => res.status(CodeSuccess.OK).send({
+      name: user.name,
+      _id: user._id,
+      email: user.email,
+    }))
     .catch((err) => {
       if (err.name === 'ValidationError') {
         next(new BadRequestError(Message.BAD_REQUEST));
@@ -80,7 +76,7 @@ const getUserById = (req, res, next) => {
   User.findById(req.params._id)
     .orFail()
     .then((user) => {
-      res.status(CodeSuccess.OK).send(user.name, user.email);
+      res.status(CodeSuccess.OK).send({ user });
     })
     .catch((err) => {
       if (err instanceof DocumentNotFoundError) {
@@ -98,7 +94,7 @@ const updateUserData = (req, res, next) => {
   User.findByIdAndUpdate(
     req.user._id,
     { name, email },
-    { new: true, runValidators: true }
+    { new: true, runValidators: true },
   )
     .orFail()
     .then((user) => {
