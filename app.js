@@ -3,6 +3,7 @@ const express = require('express');
 const mongoose = require('mongoose');
 const { errors } = require('celebrate');
 const helmet = require('helmet');
+const cookieParser = require('cookie-parser');
 const cors = require('cors');
 
 const allowedCors = [
@@ -30,6 +31,7 @@ mongoose.connect(NODE_ENV === modeProduction ? MONGO_URL : dbAdress, {
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use(cookieParser());
 
 app.use(helmet());
 app.use(limiter);
