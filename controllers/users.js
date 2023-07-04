@@ -41,6 +41,7 @@ const loginUser = (req, res, next) => {
 
 // выход из системы
 const logoutUser = (req, res) => {
+  req.clearCookie('jwt').send({ message: Message.LOGOUT });
   res.clearCookie('jwt').send({ message: Message.LOGOUT });
 };
 

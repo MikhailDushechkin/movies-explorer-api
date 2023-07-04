@@ -12,7 +12,7 @@ const { Message } = require('../utils/constants');
 
 mainRouter.post('/signup', userValidation, createUser);
 mainRouter.post('/signin', userAuthValidation, loginUser);
-mainRouter.post('/signout', logoutUser);
+mainRouter.post('/signout', auth, logoutUser);
 
 mainRouter.use('/users', auth, usersRouter);
 mainRouter.use('/movies', auth, moviesRouter);
